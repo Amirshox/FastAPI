@@ -40,34 +40,17 @@ def login(auth_details: AuthDetails):
     return {'token': token}
 
 
-@router.get("/users/", response_model=List[UserSchema])
+@router.get("/users/")
 async def get_users():
     users = await get_all_users()
     return users
 
 
-@router.get("/users/{id}/", response_model=UserSchema)
+@router.get("/users/{id}/")
 async def get_user(id: int):
     user = await get_one_user(user_id=id)
 
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
-    user = {
-        'id': 1,
-        "name": "qwerty",
-        "workplaces": [
-            {
-                'address': "qwerty",
-                'user_id': 1,
-            },
-            {
-                'address': "qwerty",
-                'user_id': 1,
-            },
-            {
-                'address': "qwerty",
-                'user_id': 1,
-            },
-        ]
-    }
+
     return user
