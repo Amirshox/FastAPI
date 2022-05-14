@@ -28,6 +28,22 @@ async def get_all_users():
     return result
 
 
+async def get_users_with_passwords():
+    query = "SELECT * FROM users;"
+    users = await database.fetch_all(query)
+    result = []
+    for user in users:
+        result.append(
+            {
+                "id": user.get('id'),
+                "username": user.get("username"),
+                "password": user.get("password")
+            }
+        )
+
+    return result
+
+
 async def get_one_user(user_id: int):
     query = f"SELECT * FROM users WHERE id={user_id};"
     user = await database.fetch_one(query)
@@ -55,3 +71,9 @@ async def get_one_user(user_id: int):
         )
 
     return result
+
+
+async def create_user(username: str, password: str):
+    query = f"INSERT INTO users(username, password) VALUES ('{username}', '{password}');"
+    user = await database.execute(query)
+    return user

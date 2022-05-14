@@ -1,34 +1,30 @@
-from typing import List
-
 from fastapi import APIRouter, Depends
 from fastapi import status, HTTPException
 
 from auth import AuthHandler
-from db import database
-from schemas import UserSchema, WorkPlaceSchema, AuthDetails
-from queries import get_all_users, get_one_user
+from schemas import AuthDetails
+from queries import get_all_users, get_one_user, create_user, get_users_with_passwords
 
 router = APIRouter(tags=["Users"])
 
 auth_handler = AuthHandler()
-users = []
 
 
 @router.post('/register', status_code=201)
-def register(auth_details: AuthDetails):
-    if any(x['username'] == auth_details.username for x in users):
+async def register(auth_details: AuthDetails):
+    users = await get_all_users()
+    if any(user['username'] == auth_details.username for user in users):
         raise HTTPException(status_code=400, detail='Username is taken')
     hashed_password = auth_handler.get_password_hash(auth_details.password)
-    users.append({
-        'username': auth_details.username,
-        'password': hashed_password
-    })
-    return
+
+    await create_user(username=auth_details.username, password=hashed_password)
+    return {"message": "Successfully Created!"}
 
 
 @router.post('/login')
-def login(auth_details: AuthDetails):
+async def login(auth_details: AuthDetails):
     user = None
+    users = await get_users_with_passwords()
     for x in users:
         if x['username'] == auth_details.username:
             user = x
@@ -41,13 +37,13 @@ def login(auth_details: AuthDetails):
 
 
 @router.get("/users/")
-async def get_users():
+async def get_users(username=Depends(auth_handler.auth_wrapper)):
     users = await get_all_users()
     return users
 
 
 @router.get("/users/{id}/")
-async def get_user(id: int):
+async def get_user(id: int, username=Depends(auth_handler.auth_wrapper)):
     user = await get_one_user(user_id=id)
 
     if not user:
